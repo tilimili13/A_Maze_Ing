@@ -32,16 +32,15 @@ def load_config(filename: str = "default.cfg") -> Config:
         content = f.read()
 
     parser.read_string("[DEFAULT]\n" + content)
-
     d = parser["DEFAULT"]
 
     return Config(
-        width=int(d.get("WIDTH", "20")),
-        height=int(d.get("HEIGHT", "15")),
-        entry=_parse_point(d.get("ENTRY", "0,0")),
-        exit=_parse_point(d.get("EXIT", "0,0")),
-        output_file=d.get("OUTPUT_FILE", "maze.txt"),
+        width=d.getint("WIDTH", fallback=20),
+        height=d.getint("HEIGHT", fallback=15),
+        entry=_parse_point(d.get("ENTRY", "0,0").strip()),
+        exit=_parse_point(d.get("EXIT", "0,0").strip()),
+        output_file=d.get("OUTPUT_FILE", "maze.txt").strip(),
         perfect=d.getboolean("PERFECT", fallback=True),
-        algorithm=d.get("ALGORITHM", "backtracking").strip,
-        seed=(int(d["SEED"]) if "SEED" in d else None),
+        algorithm=d.get("ALGORITHM", "backtracking").strip(),
+        seed=d.getint("SEED", fallback=None),
     )
