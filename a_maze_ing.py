@@ -89,8 +89,16 @@ def main() -> None:
             colors=colors,
         )
 
-    # MLX
-    # will be here
+        # MLX
+    if cfg.display in ("mlx", "both"):
+        try:
+            from ui_mlx import display_maze_file
+            display_maze_file(cfg.output_file)
+        except ImportError as exc:
+            logger.warning("MLX viewer not available (%s). Skipping MLX.", exc)
+
+if __name__ == "__main__":
+    main()
 
 if __name__ == "__main__":
     main()
