@@ -9,7 +9,7 @@ from generator import generate_maze
 from io_utils import dump_maze
 from maze_types import Direction
 from ui_ascii import AsciiColors, print_maze
-#from ui_mlx import display_maze
+from ui_mlx import interactive_display
 
 # something will be here
 from solution import (
@@ -92,13 +92,9 @@ def main() -> None:
         # MLX
     if cfg.display in ("mlx", "both"):
         try:
-            from ui_mlx import display_maze_file
-            display_maze_file(cfg.output_file)
+            interactive_display(cfg)
         except ImportError as exc:
             logger.warning("MLX viewer not available (%s). Skipping MLX.", exc)
-
-if __name__ == "__main__":
-    main()
 
 if __name__ == "__main__":
     main()
