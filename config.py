@@ -9,7 +9,6 @@ class Config:
     exit: tuple[int, int]
     perfect: bool
     output_file: str = "maze.txt"
-    algorithm: str = "backtracking"
     seed: int | None = None
     # colour settings (0xRRGGBB)
     color_wall: int = 0xFFFFFF
@@ -64,7 +63,6 @@ def load_config(filename: str = "default.cfg") -> Config:
         exit=_parse_point(d.get("EXIT", "0,0").strip()),
         output_file=d.get("OUTPUT_FILE", "maze.txt").strip(),
         perfect=d.getboolean("PERFECT", fallback=True),
-        algorithm=d.get("ALGORITHM", "backtracking").strip(),
         seed=d.getint("SEED", fallback=None),
         color_wall=_parse_color(d.get("COLOR_WALL", "0xFFFFFF")),
         color_path=_parse_color(d.get("COLOR_PATH", "0x00FF00")),
