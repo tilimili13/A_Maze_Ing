@@ -1,8 +1,29 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Iterable
+from config import Config
 from maze_types import Maze, Point, Direction
 
+
+@dataclass
+class AsciiColors:
+    wall: int = 0xFFFFFF
+    path: int = 0x00FF00
+    entry: int = 0x00AAFF
+    exit: int = 0xFF3333
+    pattern42: int = 0xFFAA00
+    background: int = 0x000000
+
+def colors_from_config(cfg: Config) -> AsciiColors:
+    return AsciiColors(
+        wall=cfg.color_wall,
+        path=cfg.color_path,
+        entry=cfg.color_entry,
+        exit=cfg.color_exit,
+        pattern42=cfg.color_pattern42,
+        background=cfg.color_background,
+    )
 
 def dump_maze(
     maze: Maze,

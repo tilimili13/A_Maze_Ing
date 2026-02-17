@@ -6,9 +6,9 @@ import sys
 from config import Config, load_config
 from decorators import safe
 from generator import generate_maze
-from io_utils import dump_maze
+from io_utils import dump_maze, AsciiColors, colors_from_config
 from maze_types import Direction
-from ui_ascii import AsciiColors, print_maze
+from ui_ascii import print_maze
 from ui_mlx import interactive_display
 
 # something will be here
@@ -18,18 +18,7 @@ from solution import (
     path_to_str,
 )
 
-
 logger = logging.getLogger(__name__)
-
-def colors_from_config(cfg: Config) -> AsciiColors:
-    return AsciiColors(
-        wall=cfg.color_wall,
-        path=cfg.color_path,
-        entry=cfg.color_entry,
-        exit=cfg.color_exit,
-        pattern42=cfg.color_pattern42,
-        background=cfg.color_background,
-    )
 
 def generate_and_solve(cfg: Config) -> tuple[list[list[int]], list[Direction] | None]:
     maze = generate_maze(

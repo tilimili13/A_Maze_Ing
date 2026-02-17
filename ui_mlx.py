@@ -8,7 +8,8 @@ from config import Config
 from generator import generate_maze
 from solution import solve
 from io_utils import dump_maze
-from maze_types import Direction
+from maze_types import Direction, Point, Maze
+from screen import Screen
 
 # Wall bits (closed if bit=1)
 N, E, S, W = 1, 2, 4, 8
@@ -34,22 +35,24 @@ BTN_BG = 0x404040
 BTN_BG_ACTIVE = 0x606060
 BTN_BORDER = 0xA0A0A0
 
-
-def put_pixel32(
+def put_pixel(
         buf: memoryview, 
         line_length: int, 
         x: int, 
         y: int, 
         color: int) -> None:
     off = y * line_length + x * 4
-    r = (color >> 16) & 0xFF
-    g = (color >> 8) & 0xFF
-    b = color & 0xFF
+    [r, g, b] = parse_color(color)
     buf[off + 0] = b
     buf[off + 1] = g
     buf[off + 2] = r
     buf[off + 3] = 255
 
+def parse_color(color: int) -> tuple[int, int, int]:
+    r = (color >> 16) & 0xFF
+    g = (color >> 8) & 0xFF
+    b = color & 0xFF
+    return r, g, b
 
 def hline(
         buf: memoryview, 
@@ -61,7 +64,7 @@ def hline(
     if x0 > x1:
         x0, x1 = x1, x0
     for x in range(x0, x1 + 1):
-        put_pixel32(buf, line_length, x, y, color)
+        put_pixel(buf, line_length, x, y, color)
 
 
 def vline(
@@ -74,7 +77,7 @@ def vline(
     if y0 > y1:
         y0, y1 = y1, y0
     for yy in range(y0, y1 + 1):
-        put_pixel32(buf, line_length, x, yy, color)
+        put_pixel(buf, line_length, x, yy, color)
 
 
 def fill_rect(
@@ -87,8 +90,7 @@ def fill_rect(
         color: int) -> None:
     for y in range(y0, y0 + h):
         for x in range(x0, x0 + w):
-            put_pixel32(buf, line_length, x, y, color)
-
+            put_pixel(buf, line_length, x, y, color)
 
 def rect_border(buf: memoryview, 
                 line_length: int, 
@@ -105,14 +107,14 @@ def rect_border(buf: memoryview,
 
 def fill_cell(buf: memoryview, line_length: int, cx: int, cy: int, color: int, y_offset: int) -> None:
     # “dot” look inside the cell
-    margin = 7
-    x0 = cx * CELL + margin
-    y0 = cy * CELL + y_offset + margin
-    x1 = (cx + 1) * CELL - margin
-    y1 = (cy + 1) * CELL + y_offset - margin
+    margin: int = 7
+    x0: int = cx * CELL + margin
+    y0: int = cy * CELL + y_offset + margin
+    x1: int = (cx + 1) * CELL - margin
+    y1: int = (cy + 1) * CELL + y_offset - margin
     for y in range(y0, y1 + 1):
         for x in range(x0, x1 + 1):
-            put_pixel32(buf, line_length, x, y, color)
+            put_pixel(buf, line_length, x, y, color)
 
 
 def inside(mx: int, my: int, rect: tuple[int, int, int, int]) -> bool:
@@ -120,7 +122,7 @@ def inside(mx: int, my: int, rect: tuple[int, int, int, int]) -> bool:
     return x <= mx < x + w and y <= my < y + h
 
 
-def path_cells_from_dirs(entry: tuple[int, int], path: list[Direction] | None) -> set[tuple[int, int]]:
+def path_cells_from_dirs(entry: Point, path: list[Direction] | None) -> set[Point]:
     x, y = entry
     cells = {(x, y)}
     if not path:
@@ -140,7 +142,7 @@ def clear_image(
         color: int) -> None:
     for y in range(win_h):
         for x in range(win_w):
-            put_pixel32(buf, line_length, x, y, color)
+            put_pixel(buf, line_length, x, y, color)
 
 
 def draw_toolbar(ctx: dict[str, Any]) -> None:
@@ -218,18 +220,14 @@ def redraw(ctx: dict[str, Any]) -> None:
     m.mlx_put_image_to_window(ctx["mlx_ptr"], ctx["win_ptr"], ctx["img"], 0, 0)
 
 
-def regenerate(ctx: dict[str, Any]) -> None:
-    cfg: Config = ctx["cfg"]
+def regenerate(screen: Screen) -> None:
+    cfg: Config = screen.cfg
 
-    seed = ctx.get("seed")
-    if seed is None:
-        seed = cfg.seed
-    if seed is None:
-        seed = 0
+    seed = screen.seed or cfg.seed or 0
     seed += 1
-    ctx["seed"] = seed
+    screen.seed = seed
 
-    maze = generate_maze(
+    maze: Maze = generate_maze(
         cfg.width,
         cfg.height,
         cfg.entry,
@@ -239,121 +237,82 @@ def regenerate(ctx: dict[str, Any]) -> None:
     )
     path = solve(maze, cfg.entry, cfg.exit, perfect=cfg.perfect) or []
 
-    ctx["maze"] = maze
-    ctx["entry"] = cfg.entry
-    ctx["exit"] = cfg.exit
-    ctx["path_cells"] = path_cells_from_dirs(cfg.entry, path)
+    screen.maze = maze
+    screen.path_cells = path_cells_from_dirs(cfg.entry, path)
 
     # Optional: keep writing output file for your project requirements
     dump_maze(maze, cfg.entry, cfg.exit, path, cfg.output_file)
 
 
-def cycle_wall_color(ctx: dict[str, Any]) -> None:
-    ctx["wall_idx"] = (ctx["wall_idx"] + 1) % len(WALL_COLORS)
-    ctx["wall_color"] = WALL_COLORS[ctx["wall_idx"]]
+def cycle_wall_color(screen: Screen) -> None:
+    screen.wall_idx = (screen.wall_idx + 1) % len(WALL_COLORS)
+    screen.wall_color = WALL_COLORS[screen.wall_idx]
 
 
-def on_mouse(button: int, x: int, y: int, ctx: dict[str, Any]):
+def on_mouse(button: int, x: int, y: int, screen: Screen):
     if button != 1:
         return 0
 
-    if inside(x, y, ctx["btn_new"]):
-        regenerate(ctx)
-        redraw(ctx)
+    if inside(x, y, screen.buttons["new"]):
+        regenerate(screen)
+        redraw(screen)
         return 0
 
-    if inside(x, y, ctx["btn_path"]):
-        ctx["show_path"] = not ctx["show_path"]
-        redraw(ctx)
+    if inside(x, y, screen.buttons["path"]):
+        screen.show_path = not screen.show_path
+        redraw(screen)
         return 0
 
-    if inside(x, y, ctx["btn_wall"]):
-        cycle_wall_color(ctx)
-        redraw(ctx)
+    if inside(x, y, screen.buttons["wall"]):
+        cycle_wall_color(screen)
+        redraw(screen)
         return 0
 
     return 0
 
 
-def on_key(keysym: int, ctx: dict[str, Any]):
+def on_key(keysym: int, screen: Screen):
     # Quit: ESC / q / 4
     if keysym in (65307, 113, 52):
-        ctx["m"].mlx_loop_exit(ctx["mlx_ptr"])
+        screen.exit()
         return 0
 
     # 1: NEW (regenerate)
     if keysym == 49:
-        regenerate(ctx)
-        redraw(ctx)
+        regenerate(screen)
+        redraw(screen)
         return 0
 
     # 2: toggle path
     if keysym == 50:
-        ctx["show_path"] = not ctx["show_path"]
-        redraw(ctx)
+        screen.show_path = not screen.show_path
+        redraw(screen)
         return 0
 
     # 3: wall color
     if keysym == 51:
-        cycle_wall_color(ctx)
-        redraw(ctx)
+        cycle_wall_color(screen)
+        redraw(screen)
         return 0
 
     return 0
 
 
 def interactive_display(cfg: Config) -> None:
-    win_w = cfg.width * CELL + 1
-    win_h = cfg.height * CELL + UI_H + 1
-
     m = Mlx()
-    mlx_ptr = m.mlx_init()
-    win_ptr = m.mlx_new_window(
-        mlx_ptr,
-        win_w,
-        win_h,
-        "A-Maze-ing  1:new 2:path 3:color 4:quit",
-    )
+    screen: Screen = Screen(cfg, m)
 
-    img = m.mlx_new_image(mlx_ptr, win_w, win_h)
-    buf, bpp, line_length, endian = m.mlx_get_data_addr(img)
+    regenerate(screen)
+    redraw(screen)
 
-    ctx: dict[str, Any] = {
-        "cfg": cfg,
-        "seed": cfg.seed,
-        "m": m,
-        "mlx_ptr": mlx_ptr,
-        "win_ptr": win_ptr,
-        "img": img,
-        "buf": buf,
-        "line_length": line_length,
-        "win_w": win_w,
-        "win_h": win_h,
-        "show_path": True,
-        "wall_idx": 0,
-        "wall_color": WALL_COLORS[0],
-        # placeholders, filled by regenerate()
-        "maze": [[int(N | E | S | W)]],
-        "entry": cfg.entry,
-        "exit": cfg.exit,
-        "path_cells": set(),
-    }
+    m.mlx_key_hook(screen.win_ptr, on_key, screen)
+    m.mlx_mouse_hook(screen.win_ptr, on_mouse, screen)
+    m.mlx_hook(screen.win_ptr, 33, 0, lambda *_: m.mlx_loop_exit(screen.ml_ptr), None)
 
-    ctx["btn_new"] = (PAD, 4, BTN_W, BTN_H)
-    ctx["btn_path"] = (PAD + (BTN_W + BTN_GAP) * 1, 4, BTN_W, BTN_H)
-    ctx["btn_wall"] = (PAD + (BTN_W + BTN_GAP) * 2, 4, BTN_W, BTN_H)
+    m.mlx_loop(screen.ml_ptr)
 
-    regenerate(ctx)
-    redraw(ctx)
-
-    m.mlx_key_hook(win_ptr, on_key, ctx)
-    m.mlx_mouse_hook(win_ptr, on_mouse, ctx)
-    m.mlx_hook(win_ptr, 33, 0, lambda *_: m.mlx_loop_exit(mlx_ptr), None)
-
-    m.mlx_loop(mlx_ptr)
-
-    m.mlx_destroy_image(mlx_ptr, img)
-    m.mlx_destroy_window(mlx_ptr, win_ptr)
+    m.mlx_destroy_image(screen.ml_ptr, screen.img)
+    m.mlx_destroy_window(screen.ml_ptr, screen.win_ptr)
 
 if __name__ == "__main__":
     filename = sys.argv[1] if len(sys.argv) > 1 else "maze.txt"
