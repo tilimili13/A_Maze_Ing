@@ -13,7 +13,9 @@ class Direction(IntFlag):
     WEST = auto()
 
     def __str__(self) -> str:
-        return self.name[0]
+        if self.name:
+            return self.name[0]
+        return str(self.value)
 
     @property
     def opposite(self) -> "Direction":
