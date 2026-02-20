@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Sequence
 
-from maze_types import Maze, Point, Direction, CLOSED_CELL
+from utils.maze_types import Maze, Point, Direction, CLOSED_CELL
 
 def _fg(r: int, g: int, b: int) -> str:
     return f"\033[38;2;{r};{g};{b}m"
