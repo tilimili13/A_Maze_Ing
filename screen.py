@@ -1,5 +1,5 @@
 from typing import Any
-from maze_types import Maze, Point
+from utils.maze_types import Maze, Point
 from config import Config
 from button import Button
 from mlx import Mlx

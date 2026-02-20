@@ -1,4 +1,4 @@
-from maze_types import Maze, Direction, Point, CLOSED_CELL
+from utils.maze_types import Maze, Direction, Point, CLOSED_CELL
 import random
 
 # "42" pattern

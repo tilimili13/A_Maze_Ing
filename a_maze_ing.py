@@ -4,10 +4,9 @@ import logging
 import sys
 
 from config import Config, load_config
-from decorators import safe
 from generator import generate_maze
-from io_utils import dump_maze, AsciiColors, colors_from_config
-from maze_types import Direction
+from utils.io_utils import dump_maze, AsciiColors, colors_from_config
+from utils.maze_types import Direction
 from ui_ascii import print_maze
 from ui_mlx import interactive_display
 
@@ -17,7 +16,7 @@ from solution import (
     solve,
     path_to_str,
 )
-
+git switch 
 logger = logging.getLogger(__name__)
 
 def generate_and_solve(cfg: Config) -> tuple[list[list[int]], list[Direction] | None]:
