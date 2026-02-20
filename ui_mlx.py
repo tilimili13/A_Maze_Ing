@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from typing import Any
 
 from mlx import Mlx
@@ -7,8 +8,10 @@ from mlx import Mlx
 from config import Config
 from generator import generate_maze
 from solution import solve
-from io_utils import dump_maze
-from maze_types import Direction
+from utils.io_utils import dump_maze
+from utils.maze_types import Direction
+from utils.drawer import Drawer
+from utils.buttons import Button
 
 # Wall bits (closed if bit=1)
 N, E, S, W = 1, 2, 4, 8
@@ -35,96 +38,30 @@ BTN_BG_ACTIVE = 0x606060
 BTN_BORDER = 0xA0A0A0
 
 
-def put_pixel32(
-        buf: memoryview, 
-        line_length: int, 
-        x: int, 
-        y: int, 
-        color: int) -> None:
-    off = y * line_length + x * 4
-    r = (color >> 16) & 0xFF
-    g = (color >> 8) & 0xFF
-    b = color & 0xFF
-    buf[off + 0] = b
-    buf[off + 1] = g
-    buf[off + 2] = r
-    buf[off + 3] = 255
-
-
-def hline(
-        buf: memoryview, 
-        line_length: int, 
-        x0: int, 
-        x1: int, 
-        y: int, 
-        color: int) -> None:
-    if x0 > x1:
-        x0, x1 = x1, x0
-    for x in range(x0, x1 + 1):
-        put_pixel32(buf, line_length, x, y, color)
-
-
-def vline(
-        buf: memoryview, 
-        line_length: int, 
-        x: int, 
-        y0: int, 
-        y1: int, 
-        color: int) -> None:
-    if y0 > y1:
-        y0, y1 = y1, y0
-    for yy in range(y0, y1 + 1):
-        put_pixel32(buf, line_length, x, yy, color)
-
-
-def fill_rect(
-        buf: memoryview, 
-        line_length: int, 
-        x0: int, 
-        y0: int, 
-        w: int, 
-        h: int, 
-        color: int) -> None:
-    for y in range(y0, y0 + h):
-        for x in range(x0, x0 + w):
-            put_pixel32(buf, line_length, x, y, color)
-
-
-def rect_border(buf: memoryview, 
-                line_length: int, 
-                x0: int, 
-                y0: int, 
-                w: int, 
-                h: int, 
-                color: int) -> None:
-    hline(buf, line_length, x0, x0 + w - 1, y0, color)
-    hline(buf, line_length, x0, x0 + w - 1, y0 + h - 1, color)
-    vline(buf, line_length, x0, y0, y0 + h - 1, color)
-    vline(buf, line_length, x0 + w - 1, y0, y0 + h - 1, color)
-
-
-def fill_cell(buf: memoryview, line_length: int, cx: int, cy: int, color: int, y_offset: int) -> None:
-    # “dot” look inside the cell
+def fill_cell(
+    drawer: Drawer, 
+    cx: int, 
+    cy: int, 
+    color: int, 
+    y_offset: int
+    ) -> None:
     margin = 7
     x0 = cx * CELL + margin
     y0 = cy * CELL + y_offset + margin
     x1 = (cx + 1) * CELL - margin
     y1 = (cy + 1) * CELL + y_offset - margin
     for y in range(y0, y1 + 1):
-        for x in range(x0, x1 + 1):
-            put_pixel32(buf, line_length, x, y, color)
+        drawer.hline(x0, x1, y, color)
 
-
-def inside(mx: int, my: int, rect: tuple[int, int, int, int]) -> bool:
-    x, y, w, h = rect
-    return x <= mx < x + w and y <= my < y + h
-
-
-def path_cells_from_dirs(entry: tuple[int, int], path: list[Direction] | None) -> set[tuple[int, int]]:
+def path_cells_from_dirs(
+    entry: tuple[int, int], 
+    path: list[Direction] | None
+    ) -> set[tuple[int, int]]:
     x, y = entry
     cells = {(x, y)}
     if not path:
         return cells
+
     for d in path:
         dx, dy = d.delta
         x += dx
@@ -132,63 +69,27 @@ def path_cells_from_dirs(entry: tuple[int, int], path: list[Direction] | None) -
         cells.add((x, y))
     return cells
 
-def clear_image(
-        buf: memoryview, 
-        line_length: int, 
-        win_w: int, 
-        win_h: int, 
-        color: int) -> None:
-    for y in range(win_h):
-        for x in range(win_w):
-            put_pixel32(buf, line_length, x, y, color)
-
-
-def draw_toolbar(ctx: dict[str, Any]) -> None:
-    buf = ctx["buf"]
-    ll = ctx["line_length"]
-
-    fill_rect(buf, ll, 0, 0, ctx["win_w"], UI_H, UI_BG)
-
-    # NEW
-    x, y, w, h = ctx["btn_new"]
-    fill_rect(buf, ll, x, y, w, h, BTN_BG)
-    rect_border(buf, ll, x, y, w, h, BTN_BORDER)
-
-    # PATH
-    x, y, w, h = ctx["btn_path"]
-    fill_rect(buf, ll, x, y, w, h, BTN_BG_ACTIVE if ctx["show_path"] else BTN_BG)
-    rect_border(buf, ll, x, y, w, h, BTN_BORDER)
-
-    # WALL
-    x, y, w, h = ctx["btn_wall"]
-    fill_rect(buf, ll, x, y, w, h, BTN_BG)
-    rect_border(buf, ll, x, y, w, h, BTN_BORDER)
-
-    # wall color swatch
-    sw = 12
-    fill_rect(buf, ll, x + w - sw - 3, y + 3, sw, h - 6, ctx["wall_color"])
-
-
 def redraw(ctx: dict[str, Any]) -> None:
+    drawer: Drawer = ctx["drawer"]
     maze = ctx["maze"]
     entry = ctx["entry"]
     exit_ = ctx["exit"]
-    buf = ctx["buf"]
-    ll = ctx["line_length"]
     y_offset = UI_H
     wall_color = ctx["wall_color"]
+
+    ctx["text"] = []
 
     h = len(maze)
     w = len(maze[0])
 
-    # Clear whole image buffer (toolbar + maze area)
-    buf[:] = b"\x00" * (ll * ctx["win_h"])
-    clear_image(buf, ll, ctx["win_w"], ctx["win_h"], BG_COLOR)
+    """Clear full background"""
+    drawer.fill_rect(0, 0, ctx["win_w"], ctx["win_h"], fill_color=BG_COLOR)
 
-    # Toolbar
-    draw_toolbar(ctx)
+    """Draw buttons (rectangles into buffer, labels queued into ctx["text"])"""
+    for b in ctx["buttons"]:
+        b.draw(drawer, ctx)
 
-    # Walls
+    """Draw maze walls"""
     for y in range(h):
         for x in range(w):
             cell = int(maze[y][x])
@@ -196,26 +97,64 @@ def redraw(ctx: dict[str, Any]) -> None:
             py = y * CELL + y_offset
 
             if cell & N:
-                hline(buf, ll, px, px + CELL, py, wall_color)
+                drawer.hline(px, px + CELL, py, wall_color)
             if cell & W:
-                vline(buf, ll, px, py, py + CELL, wall_color)
+                drawer.vline(px, py, py + CELL, wall_color)
 
             if y == h - 1 and (cell & S):
-                hline(buf, ll, px, px + CELL, py + CELL, wall_color)
+                drawer.hline(px, px + CELL, py + CELL, wall_color)
             if x == w - 1 and (cell & E):
-                vline(buf, ll, px + CELL, py, py + CELL, wall_color)
+                drawer.vline(px + CELL, py, py + CELL, wall_color)
 
-    # Path overlay
+    """Path overlay"""
+    if ctx.get("show_path", False):
+        for (px, py) in ctx["path_cells"]:
+            fill_cell(drawer, px, py, PATH_COLOR, y_offset)
+
+    """Entry/Exit markers"""
+    fill_cell(drawer, entry[0], entry[1], ENTRY_COLOR, y_offset)
+    fill_cell(drawer, exit_[0], exit_[1], EXIT_COLOR, y_offset)
+
+    """Blit image to window"""
+    m = ctx["m"]
+    m.mlx_put_image_to_window(ctx["mlx_ptr"], ctx["win_ptr"], ctx["img"], 0, 0)
+
+    """Draw text on top after blit"""
+    for tx, ty, color, s in ctx["text"]:
+        m.mlx_string_put(ctx["mlx_ptr"], ctx["win_ptr"], tx, ty, color, s)
+
+    """Walls"""
+    for y in range(h):
+        for x in range(w):
+            cell = int(maze[y][x])
+            px = x * CELL
+            py = y * CELL + y_offset
+
+            if cell & N:
+                drawer.hline(px, px + CELL, py, wall_color)
+            if cell & W:
+                drawer.vline(px, py, py + CELL, wall_color)
+
+            if y == h - 1 and (cell & S):
+                drawer.hline(px, px + CELL, py + CELL, wall_color)
+            if x == w - 1 and (cell & E):
+                drawer.vline(px + CELL, py, py + CELL, wall_color)
+
+    """Path overlay"""
     if ctx["show_path"]:
         for (x, y) in ctx["path_cells"]:
-            fill_cell(buf, ll, x, y, PATH_COLOR, y_offset)
+            fill_cell(drawer, x, y, PATH_COLOR, y_offset)
 
-    # Entry / Exit
-    fill_cell(buf, ll, entry[0], entry[1], ENTRY_COLOR, y_offset)
-    fill_cell(buf, ll, exit_[0], exit_[1], EXIT_COLOR, y_offset)
+    """Entry / Exit"""
+    fill_cell(drawer, entry[0], entry[1], ENTRY_COLOR, y_offset)
+    fill_cell(drawer, exit_[0], exit_[1], EXIT_COLOR, y_offset)
 
     m: Mlx = ctx["m"]
-    m.mlx_put_image_to_window(ctx["mlx_ptr"], ctx["win_ptr"], ctx["img"], 0, 0)
+    m.mlx_put_image_to_window(
+        ctx["mlx_ptr"], 
+        ctx["win_ptr"], 
+        ctx["img"], 
+        0, 0)
 
 
 def regenerate(ctx: dict[str, Any]) -> None:
@@ -237,14 +176,17 @@ def regenerate(ctx: dict[str, Any]) -> None:
         perfect=cfg.perfect,
         seed=seed,
     )
-    path = solve(maze, cfg.entry, cfg.exit, perfect=cfg.perfect) or []
+    path = solve(
+        maze, 
+        cfg.entry, 
+        cfg.exit, 
+        perfect=cfg.perfect) or []
 
     ctx["maze"] = maze
     ctx["entry"] = cfg.entry
     ctx["exit"] = cfg.exit
     ctx["path_cells"] = path_cells_from_dirs(cfg.entry, path)
 
-    # Optional: keep writing output file for your project requirements
     dump_maze(maze, cfg.entry, cfg.exit, path, cfg.output_file)
 
 
@@ -253,24 +195,16 @@ def cycle_wall_color(ctx: dict[str, Any]) -> None:
     ctx["wall_color"] = WALL_COLORS[ctx["wall_idx"]]
 
 
-def on_mouse(button: int, x: int, y: int, ctx: dict[str, Any]):
+def on_mouse(button: int, x: int, y: int, ctx: dict):
     if button != 1:
         return 0
 
-    if inside(x, y, ctx["btn_new"]):
-        regenerate(ctx)
-        redraw(ctx)
-        return 0
-
-    if inside(x, y, ctx["btn_path"]):
-        ctx["show_path"] = not ctx["show_path"]
-        redraw(ctx)
-        return 0
-
-    if inside(x, y, ctx["btn_wall"]):
-        cycle_wall_color(ctx)
-        redraw(ctx)
-        return 0
+    for b in ctx["buttons"]:
+        if b.inside(x, y):
+            if b.on_click is not None:
+                b.on_click()
+            redraw(ctx)
+            break
 
     return 0
 
@@ -316,7 +250,10 @@ def interactive_display(cfg: Config) -> None:
     )
 
     img = m.mlx_new_image(mlx_ptr, win_w, win_h)
-    buf, bpp, line_length, endian = m.mlx_get_data_addr(img)
+    buf, _, line_length, _ = m.mlx_get_data_addr(img)
+    
+    drawer = Drawer(buf, line_length)
+
 
     ctx: dict[str, Any] = {
         "cfg": cfg,
@@ -325,8 +262,7 @@ def interactive_display(cfg: Config) -> None:
         "mlx_ptr": mlx_ptr,
         "win_ptr": win_ptr,
         "img": img,
-        "buf": buf,
-        "line_length": line_length,
+        "drawer": drawer,
         "win_w": win_w,
         "win_h": win_h,
         "show_path": True,
@@ -338,23 +274,39 @@ def interactive_display(cfg: Config) -> None:
         "exit": cfg.exit,
         "path_cells": set(),
     }
+    
+    ctx["show_path"] = True
+    
+    def click_new() -> None:
+        regenerate(ctx)
 
-    ctx["btn_new"] = (PAD, 4, BTN_W, BTN_H)
-    ctx["btn_path"] = (PAD + (BTN_W + BTN_GAP) * 1, 4, BTN_W, BTN_H)
-    ctx["btn_wall"] = (PAD + (BTN_W + BTN_GAP) * 2, 4, BTN_W, BTN_H)
+    def click_path() -> None:
+        ctx["show_path"] = not ctx["show_path"]
+        ctx["btn_path"].active = ctx["show_path"]
+        
+    def click_color() -> None:
+        cycle_wall_color(ctx)
+        
+    btn_new = Button("NEW", PAD, 4, BTN_W, BTN_H, on_click=click_new)
+    btn_path = Button("PATH", PAD + (BTN_W + BTN_GAP), 4, BTN_W, BTN_H,
+                      on_click=click_path, active=True)
+    btn_wall = Button("COLOR", PAD + (BTN_W + BTN_GAP) * 2, 4, BTN_W, BTN_H,
+                      on_click=click_color)
+    
+    ctx["btn_path"] = btn_path
+    ctx["buttons"] = [btn_new, btn_path, btn_wall]
 
     regenerate(ctx)
     redraw(ctx)
 
     m.mlx_key_hook(win_ptr, on_key, ctx)
     m.mlx_mouse_hook(win_ptr, on_mouse, ctx)
-    m.mlx_hook(win_ptr, 33, 0, lambda *_: m.mlx_loop_exit(mlx_ptr), None)
+    m.mlx_hook(win_ptr, 
+               33, 0, 
+               lambda *_: m.mlx_loop_exit(mlx_ptr), 
+               None)
 
     m.mlx_loop(mlx_ptr)
 
     m.mlx_destroy_image(mlx_ptr, img)
     m.mlx_destroy_window(mlx_ptr, win_ptr)
-
-if __name__ == "__main__":
-    filename = sys.argv[1] if len(sys.argv) > 1 else "maze.txt"
-    display_maze_file(filename)
