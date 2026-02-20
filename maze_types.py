@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 from enum import IntFlag, auto
 from typing import TypeAlias
+
 
 Maze: TypeAlias = list[list[int]]
 Point: TypeAlias = tuple[int, int]
@@ -18,7 +21,7 @@ class Direction(IntFlag):
         return str(self.value)
 
     @property
-    def opposite(self) -> "Direction":
+    def opposite(self) -> Direction:
         return {
             Direction.NORTH: Direction.SOUTH,
             Direction.SOUTH: Direction.NORTH,
@@ -36,7 +39,7 @@ class Direction(IntFlag):
         }[self]
 
     @classmethod
-    def from_str(cls, value: str) -> "Direction":
+    def from_str(cls, value: str) -> Direction:
         value = value.upper()
         for member in cls:
             if member.name.startswith(value):
