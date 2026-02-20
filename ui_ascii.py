@@ -5,7 +5,6 @@ from typing import Sequence
 
 from utils.maze_types import Maze, Point, Direction, CLOSED_CELL
 
-
 def _fg(r: int, g: int, b: int) -> str:
     return f"\033[38;2;{r};{g};{b}m"
 
@@ -20,7 +19,6 @@ RESET = "\033[0m"
 def _hex_to_rgb(colour: int) -> tuple[int, int, int]:
     return (colour >> 16) & 0xFF, (colour >> 8) & 0xFF, colour & 0xFF
 
-
 @dataclass
 class AsciiColors:
     wall: int = 0xFFFFFF
@@ -29,7 +27,6 @@ class AsciiColors:
     exit: int = 0xFF3333
     pattern42: int = 0xFFAA00
     background: int = 0x000000
-
 
 def render_maze_ascii(
     maze: Maze,

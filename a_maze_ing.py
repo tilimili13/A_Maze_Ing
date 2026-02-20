@@ -1,9 +1,13 @@
 from __future__ import annotations
+
 import logging
 import sys
+
 from config import Config, load_config
+from decorators import safe
 from generator import generate_maze
-from utils import Direction, dump_maze
+from utils.io_utils import dump_maze
+from utils.maze_types import Direction
 from ui_ascii import AsciiColors, print_maze
 from ui_mlx import interactive_display
 
@@ -17,7 +21,6 @@ from solution import (
 
 logger = logging.getLogger(__name__)
 
-
 def colors_from_config(cfg: Config) -> AsciiColors:
     return AsciiColors(
         wall=cfg.color_wall,
@@ -28,9 +31,7 @@ def colors_from_config(cfg: Config) -> AsciiColors:
         background=cfg.color_background,
     )
 
-
-def generate_and_solve(cfg: Config) -> \
-        tuple[list[list[int]], list[Direction] | None]:
+def generate_and_solve(cfg: Config) -> tuple[list[list[int]], list[Direction] | None]:
     maze = generate_maze(
         cfg.width,
         cfg.height,
@@ -72,9 +73,7 @@ def main() -> None:
     logger.info("Maze written to %s", cfg.output_file)
 
     if path:
-        logger.info(
-            "Shortest path (%d steps): %s", len(path), path_to_str(path)
-        )
+        logger.info("Shortest path (%d steps): %s", len(path), path_to_str(path))
     else:
         logger.warning("No path found from %s to %s!", cfg.entry, cfg.exit)
 
@@ -96,7 +95,6 @@ def main() -> None:
             interactive_display(cfg)
         except ImportError as exc:
             logger.warning("MLX viewer not available (%s). Skipping MLX.", exc)
-
 
 if __name__ == "__main__":
     main()

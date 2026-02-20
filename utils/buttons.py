@@ -17,8 +17,7 @@ class Button:
     active: bool = False
 
     def inside(self, mx: int, my: int) -> bool:
-        return self.x <= mx < self.x + self.w and \
-                self.y <= my < self.y + self.h
+        return self.x <= mx < self.x + self.w and self.y <= my < self.y + self.h
 
     def draw(
         self,
@@ -48,9 +47,7 @@ class Button:
         bg = fill_active if self.active else fill
 
         """draw rectangle into image buffer"""
-        drawer.fill_rect(
-            self.x, self.y, self.w, self.h, fill_color=bg, border_color=border
-        )
+        drawer.fill_rect(self.x, self.y, self.w, self.h, fill_color=bg, border_color=border)
 
         if center_text:
             approx_text_w = len(self.label) * 6
