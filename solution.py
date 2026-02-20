@@ -6,7 +6,7 @@
 #    By: albezbor <albezbor@student.42tokyo.jp>     +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/02/20 21:08:29 by albezbor          #+#    #+#              #
-#    Updated: 2026/02/20 21:08:30 by albezbor         ###   ########.fr        #
+#    Updated: 2026/02/20 21:22:18 by albezbor         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -245,7 +245,7 @@ def path_to_str(path: Sequence[Direction]) -> str:
     return "".join(str(d) for d in path)
 
 def main() -> None:
-    from io_utils import load_maze
+    from utils import load_maze
 
     filename = "maze_output.txt"
     maze = load_maze(filename)

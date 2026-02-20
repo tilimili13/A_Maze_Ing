@@ -6,11 +6,11 @@
 #    By: albezbor <albezbor@student.42tokyo.jp>     +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/02/20 21:08:09 by albezbor          #+#    #+#              #
-#    Updated: 2026/02/20 21:08:10 by albezbor         ###   ########.fr        #
+#    Updated: 2026/02/20 21:21:43 by albezbor         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-from maze_types import Maze, Direction, Point, CLOSED_CELL
+from utils import Maze, Direction, Point, CLOSED_CELL
 import random
 
 # "42" pattern
