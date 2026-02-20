@@ -1,5 +1,5 @@
-from io_utils import dump_maze, load_maze
-from maze_types import Direction
+from utils.io_utils import dump_maze, load_maze
+from utils.maze_types import Direction
 
 def demo_dump() -> None:
     start, finish = (1, 1), (19, 14)

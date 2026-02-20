@@ -73,7 +73,7 @@ def dump_maze(
                         f"({col_index},{row_index}): {cell}"
                     )
 
-                hex_row.append(f"{cell:X}")
+                hex_row.append(f"{int(cell):X}")
 
             f.write("".join(hex_row) + "\n")
         # Empty line

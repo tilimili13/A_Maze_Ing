@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-from io_utils import AsciiColors
-from maze_types import Maze, Point, Direction, CLOSED_CELL
+from dataclasses import dataclass
 from typing import Sequence
+from utils.io_utils import AsciiColors
+from utils.maze_types import Maze, Point, Direction, CLOSED_CELL
+
 
 def _fg(r: int, g: int, b: int) -> str:
     return f"\033[38;2;{r};{g};{b}m"

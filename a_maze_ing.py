@@ -41,7 +41,7 @@ def generate_and_solve(cfg: Config) -> tuple[list[list[int]], list[Direction] | 
     path = solve(maze, cfg.entry, cfg.exit, perfect=cfg.perfect)
     return maze, path
 
-@safe
+
 def main() -> None:
     logging.basicConfig(
         level=logging.INFO,
