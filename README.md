@@ -17,3 +17,14 @@ Handles graphical display using MiniLibX (Python wrapper): <br>
 * Opens MLX window<br>
 * Handles ESC / window close<br>
 * Runs MLX loop<br>
+
+
+## TODO
+<input type="checkbox" checked> console mode working<br/>
+<input type="checkbox" checked> mlx mode working<br/>
+<input type="checkbox" checked> makefile<br/>
+<input type="checkbox" checked> utils<br/>
+<input type="checkbox"> README.md<br/>
+<input type="checkbox"> ??? refactoring (do we sill need?)<br/>
+<input type="checkbox"> interactive in console mode<br/>
+<input type="checkbox"> make all importable (put in one class)<br/>
