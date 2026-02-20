@@ -1,18 +1,5 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    ui_mlx.py                                          :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: albezbor <albezbor@student.42tokyo.jp>     +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2026/02/20 21:08:44 by albezbor          #+#    #+#              #
-#    Updated: 2026/02/20 21:37:12 by albezbor         ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
-
 from __future__ import annotations
 
-import sys
 from typing import Any
 
 from mlx import Mlx
@@ -51,12 +38,12 @@ BTN_BORDER = 0xA0A0A0
 
 
 def fill_cell(
-    drawer: Drawer, 
-    cx: int, 
-    cy: int, 
-    color: int, 
+    drawer: Drawer,
+    cx: int,
+    cy: int,
+    color: int,
     y_offset: int
-    ) -> None:
+        ) -> None:
     margin = 7
     x0 = cx * CELL + margin
     y0 = cy * CELL + y_offset + margin
@@ -65,10 +52,11 @@ def fill_cell(
     for y in range(y0, y1 + 1):
         drawer.hline(x0, x1, y, color)
 
+
 def path_cells_from_dirs(
-    entry: tuple[int, int], 
+    entry: tuple[int, int],
     path: list[Direction] | None
-    ) -> set[tuple[int, int]]:
+        ) -> set[tuple[int, int]]:
     x, y = entry
     cells = {(x, y)}
     if not path:
@@ -80,6 +68,7 @@ def path_cells_from_dirs(
         y += dy
         cells.add((x, y))
     return cells
+
 
 def redraw(ctx: dict[str, Any]) -> None:
     drawer: Drawer = ctx["drawer"]
@@ -163,9 +152,9 @@ def redraw(ctx: dict[str, Any]) -> None:
 
     m = ctx["m"]
     m.mlx_put_image_to_window(
-        ctx["mlx_ptr"], 
-        ctx["win_ptr"], 
-        ctx["img"], 
+        ctx["mlx_ptr"],
+        ctx["win_ptr"],
+        ctx["img"],
         0, 0)
 
 
@@ -189,9 +178,9 @@ def regenerate(ctx: dict[str, Any]) -> None:
         seed=seed,
     )
     path = solve(
-        maze, 
-        cfg.entry, 
-        cfg.exit, 
+        maze,
+        cfg.entry,
+        cfg.exit,
         perfect=cfg.perfect) or []
 
     ctx["maze"] = maze
@@ -247,6 +236,16 @@ def on_key(keysym: int, ctx: dict[str, Any]) -> int:
 
 
 def interactive_display(cfg: Config) -> None:
+    def click_new() -> None:
+        regenerate(ctx)
+
+    def click_path() -> None:
+        ctx["show_path"] = not ctx["show_path"]
+        ctx["btn_path"].active = ctx["show_path"]
+
+    def click_color() -> None:
+        cycle_wall_color(ctx)
+
     win_w = cfg.width * CELL + 1
     win_h = cfg.height * CELL + UI_H + 1
 
@@ -261,9 +260,8 @@ def interactive_display(cfg: Config) -> None:
 
     img = m.mlx_new_image(mlx_ptr, win_w, win_h)
     buf, _, line_length, _ = m.mlx_get_data_addr(img)
-    
-    drawer = Drawer(buf, line_length)
 
+    drawer = Drawer(buf, line_length)
 
     ctx: dict[str, Any] = {
         "cfg": cfg,
@@ -284,25 +282,15 @@ def interactive_display(cfg: Config) -> None:
         "exit": cfg.exit,
         "path_cells": set(),
     }
-    
-    ctx["show_path"] = True
-    
-    def click_new() -> None:
-        regenerate(ctx)
 
-    def click_path() -> None:
-        ctx["show_path"] = not ctx["show_path"]
-        ctx["btn_path"].active = ctx["show_path"]
-        
-    def click_color() -> None:
-        cycle_wall_color(ctx)
-        
+    ctx["show_path"] = True
+
     btn_new = Button("NEW", PAD, 4, BTN_W, BTN_H, on_click=click_new)
     btn_path = Button("PATH", PAD + (BTN_W + BTN_GAP), 4, BTN_W, BTN_H,
                       on_click=click_path, active=True)
     btn_wall = Button("COLOR", PAD + (BTN_W + BTN_GAP) * 2, 4, BTN_W, BTN_H,
                       on_click=click_color)
-    
+
     ctx["btn_path"] = btn_path
     ctx["buttons"] = [btn_new, btn_path, btn_wall]
 
@@ -311,10 +299,8 @@ def interactive_display(cfg: Config) -> None:
 
     m.mlx_key_hook(win_ptr, on_key, ctx)
     m.mlx_mouse_hook(win_ptr, on_mouse, ctx)
-    m.mlx_hook(win_ptr, 
-               33, 0, 
-               lambda *_: m.mlx_loop_exit(mlx_ptr), 
-               None)
+    m.mlx_hook(win_ptr, 33, 0,
+               lambda *_: m.mlx_loop_exit(mlx_ptr), None)
 
     m.mlx_loop(mlx_ptr)
 

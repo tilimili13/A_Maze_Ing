@@ -1,15 +1,3 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    generator.py                                       :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: albezbor <albezbor@student.42tokyo.jp>     +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2026/02/20 21:08:09 by albezbor          #+#    #+#              #
-#    Updated: 2026/02/20 21:21:43 by albezbor         ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
-
 from utils import Maze, Direction, Point, CLOSED_CELL
 import random
 
@@ -33,6 +21,7 @@ _PATTERN_HEIGHT = 5
 _DIGIT_WIDTH = 3
 _GAP = 1
 _PATTERN_WIDTH = _DIGIT_WIDTH * 2 + _GAP  # 7
+
 
 def _pattern_42_cells(ox: int, oy: int) -> set[Point]:
     cells: set[Point] = set()
@@ -76,8 +65,10 @@ def _find_42_position(
             cells = _pattern_42_cells(ox, oy)
             if entry not in cells and exit_ not in cells:
                 return ox, oy
+    raise ValueError(
+        "Cannot place '42' pattern without overlapping entry/exit"
+    )
 
-    raise ValueError("Cannot place '42' pattern without overlapping entry/exit")
 
 def _remove_wall(maze: Maze, x: int, y: int, d: Direction) -> None:
     maze[y][x] &= ~d
@@ -87,12 +78,17 @@ def _remove_wall(maze: Maze, x: int, y: int, d: Direction) -> None:
     if 0 <= nx < w and 0 <= ny < h:
         maze[ny][nx] &= ~d.opposite
 
+
 def _would_create_3x3_open(maze: Maze, x: int, y: int, d: Direction) -> bool:
     width, height = len(maze[0]), len(maze)
     dx, dy = d.delta
     nx, ny = x + dx, y + dy
-    for ay in range(max(0, max(y, ny) - 2), min(height - 2, min(y, ny)) + 1):
-        for ax in range(max(0, max(x, nx) - 2), min(width - 2, min(x, nx)) + 1):
+    for ay in range(
+        max(0, max(y, ny) - 2), min(height - 2, min(y, ny)) + 1
+    ):
+        for ax in range(
+            max(0, max(x, nx) - 2), min(width - 2, min(x, nx)) + 1
+        ):
             if _is_open_3x3(maze, ax, ay, skip_edge=(x, y, d)):
                 return True
     return False
@@ -132,6 +128,7 @@ def _pair_open(
             return True
     return not (maze[y][x] & d)
 
+
 def generate_maze(
     width: int,
     height: int,
@@ -165,6 +162,7 @@ def generate_maze(
                 maze[nny][nnx] |= d.opposite
     return maze
 
+
 def get_pattern_cells(maze: Maze) -> set[Point]:
     width, height = len(maze[0]), len(maze)
     return {
@@ -173,6 +171,7 @@ def get_pattern_cells(maze: Maze) -> set[Point]:
         for x in range(width)
         if maze[y][x] == int(CLOSED_CELL)
     }
+
 
 def _validate_points(
     width: int, height: int, entry: Point, exit_: Point
@@ -185,6 +184,7 @@ def _validate_points(
         raise ValueError(f"Exit {exit_} is out of bounds ({width}×{height})")
     if entry == exit_:
         raise ValueError("Entry and exit must be different")
+
 
 def _backtracking(
     maze: Maze,
@@ -205,7 +205,8 @@ def _backtracking(
         for d in directions:
             ddx, ddy = d.delta
             nx, ny = x + ddx, y + ddy
-            if nx < 0 or nx >= width or ny < 0 or ny >= height or (nx, ny) in visited:
+            if nx < 0 or nx >= width or ny < 0 or \
+                    ny >= height or (nx, ny) in visited:
                 continue
             _remove_wall(maze, x, y, d)
             visited.add((nx, ny))
@@ -214,6 +215,7 @@ def _backtracking(
             break
         if not carved:
             stack.pop()
+
 
 def _add_extra_passages(
     maze: Maze,
@@ -246,6 +248,7 @@ def _add_extra_passages(
         if not _would_create_3x3_open(maze, cx, cy, cd):
             _remove_wall(maze, cx, cy, cd)
             removed += 1
+
 
 def _enforce_borders(maze: Maze, width: int, height: int) -> None:
     for x in range(width):

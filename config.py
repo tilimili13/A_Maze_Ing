@@ -1,17 +1,6 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    config.py                                          :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: albezbor <albezbor@student.42tokyo.jp>     +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2026/02/20 21:07:47 by albezbor          #+#    #+#              #
-#    Updated: 2026/02/20 21:07:48 by albezbor         ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
-
 import configparser
 from dataclasses import dataclass
+
 
 @dataclass
 class Config:
@@ -40,6 +29,7 @@ def _parse_point(value: str) -> tuple[int, int]:
     x = int(parts[0].strip())
     y = int(parts[1].strip())
     return (x, y)
+
 
 def _parse_color(value: str) -> int:
     value = value.strip().lstrip("#")

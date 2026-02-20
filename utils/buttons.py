@@ -1,15 +1,3 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    buttons.py                                         :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: albezbor <albezbor@student.42tokyo.jp>     +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2026/02/20 21:07:27 by albezbor          #+#    #+#              #
-#    Updated: 2026/02/20 21:07:27 by albezbor         ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
-
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -29,7 +17,8 @@ class Button:
     active: bool = False
 
     def inside(self, mx: int, my: int) -> bool:
-        return self.x <= mx < self.x + self.w and self.y <= my < self.y + self.h
+        return self.x <= mx < self.x + self.w and \
+                self.y <= my < self.y + self.h
 
     def draw(
         self,
@@ -43,10 +32,13 @@ class Button:
         bg = fill_active if self.active else fill
 
         # draw rectangle into image buffer
-        drawer.fill_rect(self.x, self.y, self.w, self.h, fill_color=bg, border_color=border)
-
-        """queue text to draw AFTER the image is blitted"""
-        """(mlx_string_put draws directly to the window)"""
+        drawer.fill_rect(
+            self.x, self.y, self.w, self.h, fill_color=bg, border_color=border
+        )
+        """
+        queue text to draw AFTER the image is blitted
+        (mlx_string_put draws directly to the window)
+        """
         ctx.setdefault("text", []).append(
             (self.x + 10, self.y + (self.h // 2), text, self.label)
         )
