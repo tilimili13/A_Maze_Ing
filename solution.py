@@ -1,7 +1,7 @@
 from collections import deque
 from typing import Sequence
 
-from maze_types import Maze, Point, Direction, CLOSED_CELL
+from utils.maze_types import Maze, Point, Direction, CLOSED_CELL
 
 def maze_dims(maze: Maze) -> tuple[int, int]:
     height = len(maze)
