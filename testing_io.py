@@ -1,3 +1,15 @@
+# **************************************************************************** #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    testing_io.py                                      :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: albezbor <albezbor@student.42tokyo.jp>     +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2026/02/20 21:08:32 by albezbor          #+#    #+#              #
+#    Updated: 2026/02/20 21:08:32 by albezbor         ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
+
 from utils.io_utils import dump_maze, load_maze
 from utils.maze_types import Direction
 
