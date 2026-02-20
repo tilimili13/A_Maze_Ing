@@ -6,7 +6,7 @@
 #    By: albezbor <albezbor@student.42tokyo.jp>     +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/02/20 21:08:44 by albezbor          #+#    #+#              #
-#    Updated: 2026/02/20 21:08:49 by albezbor         ###   ########.fr        #
+#    Updated: 2026/02/20 21:37:12 by albezbor         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -128,7 +128,7 @@ def redraw(ctx: dict[str, Any]) -> None:
     fill_cell(drawer, exit_[0], exit_[1], EXIT_COLOR, y_offset)
 
     """Blit image to window"""
-    m = ctx["m"]
+    m: Mlx = ctx["m"]
     m.mlx_put_image_to_window(ctx["mlx_ptr"], ctx["win_ptr"], ctx["img"], 0, 0)
 
     """Draw text on top after blit"""
@@ -161,7 +161,7 @@ def redraw(ctx: dict[str, Any]) -> None:
     fill_cell(drawer, entry[0], entry[1], ENTRY_COLOR, y_offset)
     fill_cell(drawer, exit_[0], exit_[1], EXIT_COLOR, y_offset)
 
-    m: Mlx = ctx["m"]
+    m = ctx["m"]
     m.mlx_put_image_to_window(
         ctx["mlx_ptr"], 
         ctx["win_ptr"], 
@@ -207,21 +207,19 @@ def cycle_wall_color(ctx: dict[str, Any]) -> None:
     ctx["wall_color"] = WALL_COLORS[ctx["wall_idx"]]
 
 
-def on_mouse(button: int, x: int, y: int, ctx: dict):
+def on_mouse(button: int, x: int, y: int, ctx: dict) -> int:
     if button != 1:
         return 0
-
     for b in ctx["buttons"]:
         if b.inside(x, y):
             if b.on_click is not None:
                 b.on_click()
             redraw(ctx)
             break
-
     return 0
 
 
-def on_key(keysym: int, ctx: dict[str, Any]):
+def on_key(keysym: int, ctx: dict[str, Any]) -> int:
     # Quit: ESC / q / 4
     if keysym in (65307, 113, 52):
         ctx["m"].mlx_loop_exit(ctx["mlx_ptr"])

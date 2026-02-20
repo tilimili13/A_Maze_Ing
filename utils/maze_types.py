@@ -6,7 +6,7 @@
 #    By: albezbor <albezbor@student.42tokyo.jp>     +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/02/20 21:07:39 by albezbor          #+#    #+#              #
-#    Updated: 2026/02/20 21:07:39 by albezbor         ###   ########.fr        #
+#    Updated: 2026/02/20 21:34:46 by albezbor         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -54,6 +54,8 @@ class Direction(IntFlag):
     def from_str(cls, value: str) -> Direction:
         value = value.upper()
         for member in cls:
+            if member.name is None:
+                continue
             if member.name.startswith(value):
                 return member
         raise ValueError(f"Invalid direction: {value}")

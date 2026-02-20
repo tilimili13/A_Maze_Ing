@@ -6,7 +6,7 @@
 #    By: albezbor <albezbor@student.42tokyo.jp>     +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/02/20 21:08:29 by albezbor          #+#    #+#              #
-#    Updated: 2026/02/20 21:22:18 by albezbor         ###   ########.fr        #
+#    Updated: 2026/02/20 21:40:54 by albezbor         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -95,8 +95,8 @@ def _reconstruct_path(
 ) -> list[Direction]:
     path: list[Direction] = []
     cur = end
-    while visited[cur] is not None:
-        prev, d = visited[cur]
+    while (node_info := visited[cur]) is not None:
+        prev, d = node_info
         path.append(d)
         cur = prev
     path.reverse()
