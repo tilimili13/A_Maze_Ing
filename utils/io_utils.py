@@ -3,7 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Iterable
 from config import Config
-from maze_types import Maze, Point, Direction
+from .maze_types import Maze, Point, Direction
+
 
 
 @dataclass
