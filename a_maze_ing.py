@@ -6,7 +6,7 @@
 #    By: albezbor <albezbor@student.42tokyo.jp>     +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/02/20 21:07:12 by albezbor          #+#    #+#              #
-#    Updated: 2026/02/20 21:07:45 by albezbor         ###   ########.fr        #
+#    Updated: 2026/02/20 21:09:42 by albezbor         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,7 +16,6 @@ import logging
 import sys
 
 from config import Config, load_config
-from decorators import safe
 from generator import generate_maze
 from io_utils import dump_maze
 from maze_types import Direction
