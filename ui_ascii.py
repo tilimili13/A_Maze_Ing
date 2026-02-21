@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Sequence
 
-from utils.maze_types import Maze, Point, Direction, CLOSED_CELL
+from utils import Color, Maze, Point, Direction, CLOSED_CELL
 
 
 def _fg(r: int, g: int, b: int) -> str:
@@ -21,24 +21,13 @@ def _hex_to_rgb(colour: int) -> tuple[int, int, int]:
     return (colour >> 16) & 0xFF, (colour >> 8) & 0xFF, colour & 0xFF
 
 
-@dataclass
-class AsciiColors:
-    wall: int = 0xFFFFFF
-    path: int = 0x00FF00
-    entry: int = 0x00AAFF
-    exit: int = 0xFF3333
-    pattern42: int = 0xFFAA00
-    background: int = 0x000000
-
-
 def render_maze_ascii(
     maze: Maze,
-    *,
+    colors: Color,
     entry: Point | None = None,
     exit_: Point | None = None,
     path: Sequence[Direction] | None = None,
     show_path: bool = True,
-    colors: AsciiColors | None = None,
     use_color: bool = True,
 ) -> str:
     """
@@ -57,8 +46,6 @@ def render_maze_ascii(
       '## ' = '42' pattern cell
       'o ' = path cell
     """
-    if colors is None:
-        colors = AsciiColors()
 
     height = len(maze)
     width = len(maze[0])
@@ -139,7 +126,7 @@ def _cell_body(
     exit_: Point | None,
     path_cells: set[Point],
     closed: set[Point],
-    colors: AsciiColors,
+    colors: Color,
     use_color: bool,
 ) -> str:
     rst = RESET if use_color else ""
@@ -154,7 +141,7 @@ def _cell_body(
         return "X "
     if (x, y) in closed:
         if use_color:
-            return _bg(*_hex_to_rgb(colors.pattern42)) + "  " + rst
+            return _bg(*_hex_to_rgb(colors.p42)) + "  " + rst
         return "##"
     if (x, y) in path_cells:
         if use_color:
@@ -165,22 +152,21 @@ def _cell_body(
 
 def print_maze(
     maze: Maze,
-    *,
+    colors: Color,
     entry: Point | None = None,
     exit_: Point | None = None,
     path: Sequence[Direction] | None = None,
     show_path: bool = True,
-    colors: AsciiColors | None = None,
     use_color: bool = True,
 ) -> None:
     print(
         render_maze_ascii(
             maze,
+            colors=colors,
             entry=entry,
             exit_=exit_,
             path=path,
             show_path=show_path,
-            colors=colors,
             use_color=use_color,
         )
     )

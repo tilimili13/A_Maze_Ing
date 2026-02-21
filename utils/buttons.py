@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Callable
 
 from .drawer import Drawer
+from .maze_types import Point
 
 
 @dataclass
@@ -14,7 +15,9 @@ class Button:
     w: int
     h: int
     on_click: Callable[[], None] | None = None
-    active: bool = False
+    active: bool = False,
+    text_color: int = 0xFFFFFF,
+    labelxy: Point | None = None
 
     def inside(self, mx: int, my: int) -> bool:
         return self.x <= mx < self.x + self.w and \
@@ -31,7 +34,7 @@ class Button:
         pad_x: int = 10,
         text_baseline_fix: int = 4,
         center_text: bool = False,
-    ) -> None:
+    ) -> list[str]:
         """Draw the button and queue its label for later window-text rendering.
 
         Args:
@@ -57,7 +60,6 @@ class Button:
             tx = self.x + max(0, (self.w - approx_text_w) // 2)
         else:
             tx = self.x + pad_x
-
         ty = self.y + (self.h // 2) - 10
-
-        ctx.setdefault("text", []).append((tx, ty, text_color, self.label))
+        self.labelxy = (tx, ty)
+        self.text_color = text_color

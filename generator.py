@@ -134,7 +134,6 @@ def generate_maze(
     height: int,
     entry: Point,
     exit_: Point,
-    *,
     perfect: bool = True,
     seed: int | None = None,
 ) -> Maze:

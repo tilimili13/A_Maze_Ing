@@ -1,10 +1,9 @@
 from __future__ import annotations
 import logging
 import sys
-from config import Config, load_config
 from generator import generate_maze
-from utils import Direction, dump_maze
-from ui_ascii import AsciiColors, print_maze
+from utils import Color, Config, Direction, dump_maze
+from ui_ascii import print_maze
 from ui_mlx import interactive_display
 
 # something will be here
@@ -16,17 +15,6 @@ from solution import (
 
 
 logger = logging.getLogger(__name__)
-
-
-def colors_from_config(cfg: Config) -> AsciiColors:
-    return AsciiColors(
-        wall=cfg.color_wall,
-        path=cfg.color_path,
-        entry=cfg.color_entry,
-        exit=cfg.color_exit,
-        pattern42=cfg.color_pattern42,
-        background=cfg.color_background,
-    )
 
 
 def generate_and_solve(cfg: Config) -> \
@@ -59,7 +47,8 @@ def main() -> None:
     )
 
     config_file = sys.argv[1] if len(sys.argv) > 1 else "default.cfg"
-    cfg = load_config(config_file)
+    cfg = Config.load(config_file)
+    colors = Color(cfg)
 
     logger.info(
         "Config: %dx%d  entry=%s  exit=%s  perfect=%s  seed=%s",
@@ -79,21 +68,26 @@ def main() -> None:
         logger.warning("No path found from %s to %s!", cfg.entry, cfg.exit)
 
     # ASCII
-    colors = colors_from_config(cfg)
     if cfg.display in ("ascii", "both"):
         print_maze(
             maze,
+            colors=colors,
             entry=cfg.entry,
             exit_=cfg.exit,
             path=path,
             show_path=True,
-            colors=colors,
         )
 
         # MLX
     if cfg.display in ("mlx", "both"):
         try:
-            interactive_display(cfg)
+            interactive_display(
+                cfg, 
+                maze,
+                colors=colors,
+                path=path,
+                show_path=True
+            )
         except ImportError as exc:
             logger.warning("MLX viewer not available (%s). Skipping MLX.", exc)
 

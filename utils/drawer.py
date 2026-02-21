@@ -2,7 +2,7 @@ from __future__ import annotations
 
 
 class Drawer:
-    def __init__(self, buf: memoryview, line_length: int):
+    def __init__(self, buf: memoryview, line_length: int) -> None:
         self.buf = buf
         self.line_length = line_length
 
