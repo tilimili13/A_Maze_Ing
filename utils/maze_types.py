@@ -42,6 +42,8 @@ class Direction(IntFlag):
     def from_str(cls, value: str) -> Direction:
         value = value.upper()
         for member in cls:
+            if member.name is None:
+                continue
             if member.name.startswith(value):
                 return member
         raise ValueError(f"Invalid direction: {value}")

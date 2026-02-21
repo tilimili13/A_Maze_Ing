@@ -1,7 +1,7 @@
 from collections import deque
 from typing import Sequence
+from utils import Maze, Point, Direction, CLOSED_CELL
 
-from utils.maze_types import Maze, Point, Direction, CLOSED_CELL
 
 def maze_dims(maze: Maze) -> tuple[int, int]:
     height = len(maze)
@@ -38,13 +38,19 @@ def can_move(maze: Maze, x: int, y: int, direction: Direction) -> bool:
 
     return True
 
-def get_neighbors(maze: Maze, x: int, y: int) -> list[tuple[int, int, Direction]]:
+
+def get_neighbors(
+    maze: Maze,
+    x: int,
+    y: int
+        ) -> list[tuple[int, int, Direction]]:
     result: list[tuple[int, int, Direction]] = []
     for d in Direction:
         if can_move(maze, x, y, d):
             dx, dy = d.delta
             result.append((x + dx, y + dy, d))
     return result
+
 
 def bfs_shortest_path(
     maze: Maze,
@@ -58,7 +64,8 @@ def bfs_shortest_path(
     sx, sy = start
     ex, ey = end
 
-    if not (in_bounds(sx, sy, width, height) and in_bounds(ex, ey, width, height)):
+    if not (in_bounds(sx, sy, width, height) and
+            in_bounds(ex, ey, width, height)):
         return None
 
     visited: dict[Point, tuple[Point, Direction] | None] = {start: None}
@@ -77,18 +84,20 @@ def bfs_shortest_path(
 
     return None  # unreachable
 
+
 def _reconstruct_path(
     visited: dict[Point, tuple[Point, Direction] | None],
     end: Point,
 ) -> list[Direction]:
     path: list[Direction] = []
     cur = end
-    while visited[cur] is not None:
-        prev, d = visited[cur]
+    while (node_info := visited[cur]) is not None:
+        prev, d = node_info
         path.append(d)
         cur = prev
     path.reverse()
     return path
+
 
 def find_all_paths(
     maze: Maze,
@@ -118,6 +127,7 @@ def find_all_paths(
     _dfs(start)
     return results
 
+
 def _flood_fill(maze: Maze, start: Point) -> set[Point]:
     visited: set[Point] = {start}
     queue: deque[Point] = deque([start])
@@ -131,6 +141,7 @@ def _flood_fill(maze: Maze, start: Point) -> set[Point]:
 
     return visited
 
+
 def find_closed_cells(maze: Maze) -> set[Point]:
     width, height = maze_dims(maze)
     return {
@@ -139,6 +150,7 @@ def find_closed_cells(maze: Maze) -> set[Point]:
         for x in range(width)
         if is_closed_cell(maze, x, y)
     }
+
 
 def check_connectivity(maze: Maze) -> tuple[bool, set[Point]]:
     width, height = maze_dims(maze)
@@ -161,6 +173,7 @@ def check_connectivity(maze: Maze) -> tuple[bool, set[Point]]:
     unreachable = open_cells - reachable
     return len(unreachable) == 0, unreachable
 
+
 def _count_open_edges(maze: Maze) -> int:
     width, height = maze_dims(maze)
     edges = 0
@@ -176,10 +189,12 @@ def _count_open_edges(maze: Maze) -> int:
                 edges += 1
     return edges
 
+
 def is_perfect_maze(maze: Maze) -> tuple[bool, str]:
     connected, unreachable = check_connectivity(maze)
     if not connected:
-        return False, f"Maze is not connected: {len(unreachable)} unreachable cell(s)"
+        msg = f"Maze is not connected: {len(unreachable)} unreachable cell(s)"
+        return False, msg
 
     closed = find_closed_cells(maze)
     width, height = maze_dims(maze)
@@ -194,6 +209,7 @@ def is_perfect_maze(maze: Maze) -> tuple[bool, str]:
 
     return True, "Perfect maze confirmed"
 
+
 def solve(
     maze: Maze,
     start: Point,
@@ -202,6 +218,7 @@ def solve(
     perfect: bool = False,
 ) -> list[Direction] | None:
     return bfs_shortest_path(maze, start, end)
+
 
 def validate_maze(
     maze: Maze,
@@ -228,12 +245,14 @@ def validate_maze(
 
     return connected, messages
 
+
 def path_to_str(path: Sequence[Direction]) -> str:
     """Convert a list of Direction to the compact N/E/S/W string."""
     return "".join(str(d) for d in path)
 
+
 def main() -> None:
-    from io_utils import load_maze
+    from utils import load_maze
 
     filename = "maze_output.txt"
     maze = load_maze(filename)
@@ -254,7 +273,7 @@ def main() -> None:
             print(f"  unreachable: {p}")
 
     # perfect check
-    ok, reason = is_perfect_maze(maze) 
+    ok, reason = is_perfect_maze(maze)
     print(f"Perfect maze: {reason}")
 
     # solve

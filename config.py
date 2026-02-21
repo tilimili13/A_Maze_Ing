@@ -1,6 +1,7 @@
 import configparser
 from dataclasses import dataclass
 
+
 @dataclass
 class Config:
     width: int
@@ -28,6 +29,7 @@ def _parse_point(value: str) -> tuple[int, int]:
     x = int(parts[0].strip())
     y = int(parts[1].strip())
     return (x, y)
+
 
 def _parse_color(value: str) -> int:
     value = value.strip().lstrip("#")
