@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Sequence
+import sys
+import termios
+import tty
+from contextlib import contextmanager
 
 from utils.maze_types import Maze, Point, Direction, CLOSED_CELL
 
@@ -27,6 +31,7 @@ class AsciiColors:
     exit: int = 0xFF3333
     pattern42: int = 0xFFAA00
     background: int = 0x000000
+
 
 def render_maze_ascii(
     maze: Maze,
@@ -181,3 +186,73 @@ def print_maze(
             use_color=use_color,
         )
     )
+
+@contextmanager
+def raw_terminal() -> None:
+    """Temporarily switch terminal to raw mode (single key reads without Enter)."""
+    fd = sys.stdin.fileno()
+    old = termios.tcgetattr(fd)
+    try:
+        tty.setraw(fd)
+        yield
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old)
+
+
+def interactive_ascii(
+    maze: Maze,
+    *,
+    entry: Point | None = None,
+    exit_: Point | None = None,
+    path: Sequence[Direction] | None = None,
+    colors: AsciiColors | None = None,
+) -> None:
+    """Interactive ASCII viewer.
+
+    Controls:
+      c = cycle wall color
+      p = toggle path
+      q / ESC = quit
+    """
+    if colors is None:
+        colors = AsciiColors()
+
+    wall_colors = [0xFFFFFF, 0xFFAA00, 0x00AAFF, 0xFF3333, 0x00FF00]
+    idx = 0
+    show_path = True
+
+    def redraw_screen() -> None:
+        sys.stdout.write("\033[2J\033[H")  # clear screen + move cursor home
+        sys.stdout.write("ASCII controls: [c]=cycle wall  [p]=toggle path  [q]=quit\n\n")
+        sys.stdout.write(
+            render_maze_ascii(
+                maze,
+                entry=entry,
+                exit_=exit_,
+                path=path,
+                show_path=show_path,
+                colors=colors,
+                use_color=True,
+            )
+        )
+        sys.stdout.write("\n")
+        sys.stdout.flush()
+
+    with raw_terminal():
+        redraw_screen()
+        while True:
+            k = sys.stdin.read(1)
+
+            if k in ("q", "\x1b"):  # q or ESC
+                break
+
+            if k == "c":
+                idx = (idx + 1) % len(wall_colors)
+                colors.wall = wall_colors[idx]
+                redraw_screen()
+                continue
+
+            if k == "p":
+                show_path = not show_path
+                redraw_screen()
+                continue

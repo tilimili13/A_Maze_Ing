@@ -4,14 +4,12 @@ import logging
 import sys
 
 from config import Config, load_config
-from decorators import safe
 from generator import generate_maze
 from utils.io_utils import dump_maze
 from utils.maze_types import Direction
-from ui_ascii import AsciiColors, print_maze
-from ui_mlx import interactive_display
+from ui_ascii import AsciiColors, interactive_ascii
+#from ui_mlx import interactive_display
 
-# something will be here
 from solution import (
     validate_maze,
     solve,
@@ -80,12 +78,11 @@ def main() -> None:
     # ASCII
     colors = colors_from_config(cfg)
     if cfg.display in ("ascii", "both"):
-        print_maze(
+        interactive_ascii(
             maze,
             entry=cfg.entry,
             exit_=cfg.exit,
             path=path,
-            show_path=True,
             colors=colors,
         )
 
