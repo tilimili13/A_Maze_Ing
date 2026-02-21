@@ -39,7 +39,13 @@ def generate_and_solve(cfg: Config) -> \
     path = solve(maze, cfg.entry, cfg.exit, perfect=cfg.perfect)
     return maze, path
 
-
+def make_maze(cfg: Config) -> tuple[list[list[int]], list[Direction] | None]:
+    maze, path = generate_and_solve(cfg)
+    dump_maze(maze, cfg.entry, cfg.exit, path or [], cfg.output_file)
+    logger.info("Maze written to %s", cfg.output_file)
+    logger.info("Shortest path (%d steps): %s", len(path), path_to_str(path))
+    return maze, path
+    
 def main() -> None:
     logging.basicConfig(
         level=logging.INFO,
@@ -54,29 +60,44 @@ def main() -> None:
         "Config: %dx%d  entry=%s  exit=%s  perfect=%s  seed=%s",
         cfg.width, cfg.height, cfg.entry, cfg.exit, cfg.perfect, cfg.seed,
     )
-    maze, path = generate_and_solve(cfg)
-
-    # output file
-    dump_maze(maze, cfg.entry, cfg.exit, path or [], cfg.output_file)
-    logger.info("Maze written to %s", cfg.output_file)
-
-    if path:
-        logger.info(
-            "Shortest path (%d steps): %s", len(path), path_to_str(path)
-        )
-    else:
-        logger.warning("No path found from %s to %s!", cfg.entry, cfg.exit)
+    maze, path = make_maze(cfg)
 
     # ASCII
     if cfg.display in ("ascii", "both"):
-        print_maze(
-            maze,
-            colors=colors,
-            entry=cfg.entry,
-            exit_=cfg.exit,
-            path=path,
-            show_path=True,
-        )
+        next_action: int = 0
+        show_path=True
+        while next_action != 4:
+            print_maze(
+                maze,
+                colors=colors,
+                entry=cfg.entry,
+                exit_=cfg.exit,
+                path=path,
+                show_path=show_path,
+            )
+            print("=== A-maze-ing ===")
+            print("1. Re-generate a new maze")
+            print("2. Show/Hide path from entry to exit")
+            print("3. Change maze colors")
+            print("4. Quit")
+            next_action = int(input("Choice? (1-4) "))
+            if next_action == 1:
+                if cfg.seed is None:
+                    cfg.seed = 42
+                else:
+                    cfg.seed = int(cfg.seed) + 1
+                maze, path = make_maze(cfg)
+            elif next_action == 2:
+                show_path = not show_path
+            elif next_action == 3:
+                colors.random()
+            elif next_action != 4:
+                while 1 <= next_action <= 4:
+                    print(f"Wrong choice: {next_action}")
+                    next_action = int(input("Choice? (1-4) "))
+
+
+
 
         # MLX
     if cfg.display in ("mlx", "both"):
