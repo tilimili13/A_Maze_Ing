@@ -21,10 +21,10 @@ class Color:
     exit: int       = 0
     p42: int        = 0
     bg: int         = 0
-    UI_BG: int      = 0x202020
-    BTN: int        = 0x404040
-    BTN_ACTIVE: int = 0x606060
-    BTN_BORDER: int = 0xA0A0A0
+    btn: int        = 0x404040
+    btn_active: int = 0x606060
+    btn_border: int = 0xA0A0A0
+    btn_text: int   = 0xFFFFFF
     default: MazeColors
 
     def __init__(self, cfg: Config) -> None:
@@ -64,3 +64,7 @@ class Color:
         bg_hue = (p42_hue + 0.5) % 1.0
         bg_r, bg_g, bg_b = colorsys.hsv_to_rgb(bg_hue, 0.5, 0.15)
         self.bg = (int(bg_r * 255) << 16) | (int(bg_g * 255) << 8) | int(bg_b * 255)
+    
+    @classmethod
+    def hex_to_rgb(cls, colour: int) -> tuple[int, int, int]:
+        return (colour >> 16) & 0xFF, (colour >> 8) & 0xFF, colour & 0xFF

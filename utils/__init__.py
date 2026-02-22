@@ -1,5 +1,4 @@
-# utils/__init__.py
-
+from .decorators import safe
 from .drawer import Drawer
 from .buttons import Button
 from .io_utils import load_maze, dump_maze
@@ -17,6 +16,7 @@ from .maze_types import (
 __all__ = [
     "Color",
     "Drawer",
+    "Config",
     "Button",
     "load_maze",
     "dump_maze",
@@ -26,4 +26,5 @@ __all__ = [
     "MlxContext",
     "CLOSED_CELL",
     "EMPTY_CELL",
+    "safe"
 ]

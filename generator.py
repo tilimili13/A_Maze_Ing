@@ -47,10 +47,11 @@ def _find_42_position(
     min_y = 1
 
     if max_x < min_x or max_y < min_y:
-        raise ValueError(
-            f"Maze too small ({width}×{height}) to fit the '42' pattern "
-            f"(needs at least {_PATTERN_WIDTH + 2}×{_PATTERN_HEIGHT + 2})"
+        print(
+            f"Maze too small ({width}x{height}) to fit the '42' pattern "
+            f"(needs at least {_PATTERN_WIDTH + 2}x{_PATTERN_HEIGHT + 2})"
         )
+        return -1, -1
 
     for _ in range(200):
         ox = rng.randint(min_x, max_x)
@@ -65,9 +66,8 @@ def _find_42_position(
             cells = _pattern_42_cells(ox, oy)
             if entry not in cells and exit_ not in cells:
                 return ox, oy
-    raise ValueError(
-        "Cannot place '42' pattern without overlapping entry/exit"
-    )
+    print("Cannot place '42' pattern without overlapping entry/exit")
+    return -1, -1
 
 
 def _remove_wall(maze: Maze, x: int, y: int, d: Direction) -> None:
@@ -137,17 +137,14 @@ def generate_maze(
     perfect: bool = True,
     seed: int | None = None,
 ) -> Maze:
-    if width < _PATTERN_WIDTH + 2 or height < _PATTERN_HEIGHT + 2:
-        raise ValueError(
-            f"Maze too small: need at least "
-            f"{_PATTERN_WIDTH + 2}×{_PATTERN_HEIGHT + 2}, "
-            f"got {width}×{height}"
-        )
     _validate_points(width, height, entry, exit_)
     rng = random.Random(seed)
     maze: Maze = [[int(CLOSED_CELL)] * width for _ in range(height)]
     ox, oy = _find_42_position(width, height, entry, exit_, rng)
-    pattern_cells = _pattern_42_cells(ox, oy)
+    if ox > -1 and oy > -1:
+        pattern_cells = _pattern_42_cells(ox, oy)
+    else:
+        pattern_cells = []
     _backtracking(maze, width, height, entry, pattern_cells, rng)
     if not perfect:
         _add_extra_passages(maze, width, height, pattern_cells, rng)
@@ -178,9 +175,9 @@ def _validate_points(
     ex, ey = entry
     xx, xy = exit_
     if not (0 <= ex < width and 0 <= ey < height):
-        raise ValueError(f"Entry {entry} is out of bounds ({width}×{height})")
+        raise ValueError(f"Entry {entry} is out of bounds ({width}x{height})")
     if not (0 <= xx < width and 0 <= xy < height):
-        raise ValueError(f"Exit {exit_} is out of bounds ({width}×{height})")
+        raise ValueError(f"Exit {exit_} is out of bounds ({width}x{height})")
     if entry == exit_:
         raise ValueError("Entry and exit must be different")
 
